@@ -7,6 +7,7 @@ const links = [
   { href: "/", label: "Inicio" },
   { href: "/legacy", label: "Legacy" },
   { href: "/products", label: "Productos" },
+  { href: "/products/manage", label: "Cargar catálogo" },
   { href: "/orders", label: "Órdenes" },
   { href: "/ajustes", label: "Ajustes" }
 ];
@@ -14,10 +15,18 @@ const links = [
 export default function NavBar() {
   const pathname = usePathname();
 
-  const isActive = (href) => {
-    if (href === "/") return pathname === "/" || pathname === "";
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
+  const activeLink = links.reduce((best, link) => {
+    const matches = link.href === "/"
+      ? pathname === "/" || pathname === ""
+      : pathname === link.href || pathname.startsWith(`${link.href}/`);
+
+    if (!matches) return best;
+
+    if (!best || link.href.length > best.href.length) return link;
+    return best;
+  }, null);
+
+  const isActive = (href) => activeLink?.href === href;
 
   return (
     <nav className="flex items-center gap-3 overflow-x-auto text-sm">

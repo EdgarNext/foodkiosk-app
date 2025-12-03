@@ -48,7 +48,7 @@ export async function getProducts() {
     };
   }
 
-  const endpoint = `${url}/rest/v1/products?select=*`;
+  const endpoint = `${url}/rest/v1/products?select=*,categories(name)&order=created_at.desc`;
 
   try {
     const res = await fetch(endpoint, {

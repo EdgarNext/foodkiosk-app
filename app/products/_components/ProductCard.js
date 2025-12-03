@@ -3,6 +3,11 @@ import Button from "../../_components/ui/Button";
 
 export default function ProductCard({ product }) {
   const price = ((Number(product.price_cents ?? 0) || 0) / 100).toFixed(2);
+  const categoryLabel =
+    product?.category?.name ||
+    product?.categories?.name ||
+    product?.category ||
+    product?.category_name;
 
   return (
     <Card className="flex flex-col h-full">
@@ -29,9 +34,9 @@ export default function ProductCard({ product }) {
               {product.description}
             </p>
           )}
-          {product.category && (
+          {categoryLabel && (
             <p className="text-[11px] uppercase tracking-wide text-text-soft mt-2">
-              {product.category}
+              {categoryLabel}
             </p>
           )}
         </div>
