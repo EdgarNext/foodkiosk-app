@@ -9,7 +9,7 @@ export const metadata = {
 export const revalidate = 0;
 
 export default async function LegacyPage() {
-  const { categories, products } = getLegacyData();
+  const { categories, products } = await getLegacyData();
 
   return (
     <div className="flex-1 flex flex-col gap-4 p-4">

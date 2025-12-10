@@ -1,5 +1,7 @@
 import Card, { CardBody } from "../../_components/ui/Card";
 import Button from "../../_components/ui/Button";
+import UploadToSupabaseButton from "./UploadToSupabaseButton";
+import { migrateProductImage } from "../_lib/migrateProductImage";
 
 export default function ProductCard({ product }) {
   const price = ((Number(product.price_cents ?? 0) || 0) / 100).toFixed(2);
@@ -42,9 +44,21 @@ export default function ProductCard({ product }) {
         </div>
         <div className="flex items-center justify-between">
           <span className="font-semibold">${price}</span>
-          <Button variant="secondary" className="px-3 py-2 text-sm">
-            Agregar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" className="px-3 py-2 text-sm">
+              Agregar
+            </Button>
+            <form action={migrateProductImage} className="inline-flex">
+              <input type="hidden" name="id" value={product.id} />
+              <input
+                type="hidden"
+                name="image_url"
+                value={product.image_url || ""}
+              />
+              <input type="hidden" name="name" value={product.name || ""} />
+              <UploadToSupabaseButton />
+            </form>
+          </div>
         </div>
       </CardBody>
     </Card>

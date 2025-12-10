@@ -17,7 +17,7 @@ export default function LegacyProductCard({ product, onAdd }) {
           alt={product.name}
           fill
           sizes="(min-width: 1536px) 240px, (min-width: 1280px) 240px, (min-width: 1024px) 220px, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
+          className="object-contain p-2"
           priority={false}
         />
       </div>

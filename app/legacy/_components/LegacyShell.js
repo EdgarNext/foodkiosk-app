@@ -1,52 +1,60 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import LegacyCategoryButton from "./LegacyCategoryButton";
 import LegacyProductCard from "./LegacyProductCard";
+import { useLegacyOrderStore } from "../_lib/useLegacyOrderStore";
 
 export default function LegacyShell({ categories, products }) {
-  const [activeCategoryId, setActiveCategoryId] = useState(
-    categories[0]?.id ?? null
+  const router = useRouter();
+  const setCatalog = useLegacyOrderStore((state) => state.setCatalog);
+  const activeCategoryId = useLegacyOrderStore(
+    (state) => state.activeCategoryId
   );
-  const [lastAction, setLastAction] = useState("");
-  const [cart, setCart] = useState([]);
+  const setActiveCategoryId = useLegacyOrderStore(
+    (state) => state.setActiveCategoryId
+  );
+  const categoriesFromStore = useLegacyOrderStore((state) => state.categories);
+  const productsFromStore = useLegacyOrderStore((state) => state.products);
+  const cart = useLegacyOrderStore((state) => state.cart);
+  const addToCart = useLegacyOrderStore((state) => state.addToCart);
+  const removeFromCart = useLegacyOrderStore((state) => state.removeFromCart);
+  const clearCart = useLegacyOrderStore((state) => state.clearCart);
+  const total = useLegacyOrderStore((state) => state.total);
+  const lastAction = useLegacyOrderStore((state) => state.lastAction);
+  const setLastAction = useLegacyOrderStore((state) => state.setLastAction);
 
   const filtered = useMemo(() => {
-    if (!activeCategoryId) return products;
-    return products.filter((p) => p.categoryId === activeCategoryId);
-  }, [products, activeCategoryId]);
+    const source = productsFromStore?.length ? productsFromStore : products;
+    if (!activeCategoryId) return source ?? [];
+    return (source ?? []).filter((p) => p.categoryId === activeCategoryId);
+  }, [products, productsFromStore, activeCategoryId]);
 
-  const total = useMemo(
-    () =>
-      cart.reduce(
-        (acc, item) => acc + (item.price ?? 0) * (item.quantity ?? 1),
-        0
-      ),
-    [cart]
-  );
+  useEffect(() => {
+    setCatalog({ categories, products });
+  }, [categories, products, setCatalog]);
 
   const handleAdd = (product) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: (item.quantity ?? 1) + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
+    addToCart(product);
     setLastAction(`Agregado: ${product.name}`);
   };
 
   const handleRemove = (productId) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
+    removeFromCart(productId);
   };
 
   const handleClear = () => {
-    setCart([]);
+    clearCart();
     setLastAction("");
+  };
+
+  const handleOpenConfirm = () => {
+    if (cart.length === 0) {
+      setLastAction("Agrega productos a la orden para continuar");
+      return;
+    }
+    router.push("/legacy/confirm", { scroll: false });
   };
 
   return (
@@ -56,7 +64,7 @@ export default function LegacyShell({ categories, products }) {
         <div className="p-4 rounded-2xl border border-border-subtle bg-surface shadow-sm h-full overflow-auto">
           <p className="text-xs text-text-soft mb-3">Categorías</p>
           <div className="space-y-2">
-            {categories.map((category) => (
+            {categoriesFromStore.map((category) => (
               <LegacyCategoryButton
                 key={category.id}
                 category={category}
@@ -146,7 +154,12 @@ export default function LegacyShell({ categories, products }) {
                 </span>
               </div>
 
-              <button className="w-full py-2 rounded-lg bg-brand text-brand-on font-semibold text-sm">
+              <button
+                className="w-full py-2 rounded-lg bg-brand text-brand-on font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleOpenConfirm}
+                disabled={cart.length === 0}
+                type="button"
+              >
                 Enviar orden
               </button>
             </div>
