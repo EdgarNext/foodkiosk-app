@@ -1,7 +1,7 @@
 // app/layout.js
 import "./globals.css";
 import ServiceWorkerRegister from "./_components/ServiceWorkerRegister";
-import NavBar from "./_components/NavBar";
+import AppHeader from "./_components/AppHeader";
 
 export const metadata = {
   title: "Kiosko de alimentos",
@@ -38,17 +38,7 @@ export default function RootLayout({ children }) {
       <body className="bg-app text-text-main">
         <ServiceWorkerRegister />
         <div className="min-h-screen flex flex-col">
-          <header className="bg-app-soft border-b border-border-subtle px-4 py-3 flex flex-col gap-2 sticky top-0 z-30">
-            <div className="flex items-center justify-between">
-              <h1 className="text-lg font-semibold tracking-tight">
-                Kiosko de alimentos
-              </h1>
-              <span className="text-sm text-text-muted">
-                Modo pedido en mostrador
-              </span>
-            </div>
-            <NavBar />
-          </header>
+          <AppHeader />
 
           <main className="flex-1 flex flex-col">{children}</main>
         </div>

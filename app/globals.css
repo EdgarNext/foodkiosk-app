@@ -64,3 +64,45 @@ body {
 *::after {
   box-sizing: border-box;
 }
+
+/* Ajustes de impresión para tiket térmico */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Ocultar navegación y elementos no deseados en impresión */
+  header,
+  nav,
+  .app-navbar,
+  .brand-bar,
+  .sidebar,
+  .print-hidden {
+    display: none !important;
+  }
+
+  /* Foco exclusivo en el tiket */
+  #kiosk-ticket-root {
+    width: 80mm;
+    padding: 0 2mm;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  #kiosk-ticket-root * {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  #kiosk-ticket-root,
+  #kiosk-ticket-root section,
+  #kiosk-ticket-root article {
+    page-break-inside: avoid;
+  }
+}
