@@ -1,4 +1,4 @@
-const CACHE_NAME = "foodkiosk-cache-v6.16";
+const CACHE_NAME = "foodkiosk-cache-v6.17";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   "/",

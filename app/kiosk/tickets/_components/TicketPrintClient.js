@@ -118,19 +118,22 @@ export default function TicketPrintClient({
         <div className="print-actions">
           <button
             type="button"
-            className="print-actions__button"
-            onClick={() => window.print()}
-          >
-            Imprimir tiket
-          </button>
-          <button
-            type="button"
             className="print-actions__button print-actions__button--primary"
             onClick={handleGoHome}
           >
-            Todo listo / Nuevo pedido
+            Finalizar
+          </button>
+          <button
+            type="button"
+            className="print-actions__button print-actions__button--secondary"
+            onClick={() => window.print()}
+          >
+            Reimprimir tiket
           </button>
         </div>
+        <p className="print-actions__hint">
+          En caso de error reimprime tu tiket
+        </p>
       </div>
 
       <style jsx global>{`
@@ -263,15 +266,15 @@ export default function TicketPrintClient({
         }
 
         .print-actions {
-          display: flex;
-          gap: 12px;
-          justify-content: center;
           width: 100%;
-          max-width: 320px;
+          max-width: 360px;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
         }
 
         .print-actions__button {
-          flex: 1;
           padding: 14px 16px;
           font-size: 15px;
           font-weight: 700;
@@ -280,12 +283,31 @@ export default function TicketPrintClient({
           background: #fff;
           color: #111827;
           cursor: pointer;
+          width: 100%;
         }
 
         .print-actions__button--primary {
           background: var(--color-brand, #2563eb);
           color: var(--color-brand-on, #fff);
           border-color: var(--color-brand, #2563eb);
+          width: 100%;
+        }
+
+        .print-actions__button--secondary {
+          align-self: flex-start;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 8px 10px;
+          border-color: #e5e7eb;
+          background: #f9fafb;
+          color: #6b7280;
+        }
+
+        .print-actions__hint {
+          margin-top: 6px;
+          text-align: center;
+          font-size: 12px;
+          color: #6b7280;
         }
 
         @media print {
