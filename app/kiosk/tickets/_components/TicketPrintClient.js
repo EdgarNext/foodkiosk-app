@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 export default function TicketPrintClient({
   ticket,
   autoPrint = false,
-  redirectPath = null,
-  redirectDelayMs = 2000,
   onFinishOrder = null
 }) {
   const printedRef = useRef(false);
@@ -15,11 +13,7 @@ export default function TicketPrintClient({
 
   const handleGoHome = () => {
     onFinishOrder?.();
-    if (redirectPath) {
-      router.push(redirectPath);
-      return;
-    }
-    router.push("/kiosk");
+    router.replace("/kiosk?newOrder=1");
   };
 
   useEffect(() => {
@@ -28,16 +22,10 @@ export default function TicketPrintClient({
 
     const timer = setTimeout(() => {
       window.print();
-
-      if (redirectPath) {
-        setTimeout(() => {
-          router.push(redirectPath);
-        }, redirectDelayMs);
-      }
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [autoPrint, redirectPath, redirectDelayMs, router]);
+  }, [autoPrint]);
 
   const createdAt = ticket?.createdAt;
 
@@ -137,10 +125,10 @@ export default function TicketPrintClient({
           </button>
           <button
             type="button"
-            className="print-actions__button print-actions__button--ghost"
+            className="print-actions__button print-actions__button--primary"
             onClick={handleGoHome}
           >
-            Terminar pedido
+            Todo listo / Nuevo pedido
           </button>
         </div>
       </div>
@@ -276,22 +264,28 @@ export default function TicketPrintClient({
 
         .print-actions {
           display: flex;
-          gap: 8px;
+          gap: 12px;
+          justify-content: center;
+          width: 100%;
+          max-width: 320px;
         }
 
         .print-actions__button {
-          padding: 10px 14px;
-          font-size: 14px;
-          font-weight: 600;
-          border-radius: 10px;
+          flex: 1;
+          padding: 14px 16px;
+          font-size: 15px;
+          font-weight: 700;
+          border-radius: 12px;
           border: 1px solid #d1d5db;
           background: #fff;
           color: #111827;
           cursor: pointer;
         }
 
-        .print-actions__button--ghost {
-          background: transparent;
+        .print-actions__button--primary {
+          background: var(--color-brand, #2563eb);
+          color: var(--color-brand-on, #fff);
+          border-color: var(--color-brand, #2563eb);
         }
 
         @media print {

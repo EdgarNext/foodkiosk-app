@@ -1,7 +1,7 @@
 'use client';
 
-import { useActionState, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import KioskShell from "./KioskShell";
 import { useKioskOrderStore } from "../_lib/useKioskOrderStore";
 import { createKioskOrder } from "../_lib/createKioskOrder";
@@ -20,10 +20,13 @@ export default function KioskFlow({ categories, products }) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [serviceLocation, setServiceLocation] = useState("");
+  const newOrderParam = useSearchParams()?.get("newOrder");
+  const handledNewOrderRef = useRef(false);
 
   const cart = useKioskOrderStore((state) => state.cart);
   const total = useKioskOrderStore((state) => state.total);
   const clearCart = useKioskOrderStore((state) => state.clearCart);
+  const resetFlow = useKioskOrderStore((state) => state.resetFlow);
 
   const [state, formAction] = useActionState(createKioskOrder, initialState);
 
@@ -61,6 +64,15 @@ export default function KioskFlow({ categories, products }) {
     // Navegamos sin limpiar estado; el carrito/step se limpian en un "nuevo pedido"
     router.replace(`/kiosk/tickets/${state.orderId}?justCreated=1`);
   }, [state, router]);
+
+  useEffect(() => {
+    if (handledNewOrderRef.current) return;
+    if (newOrderParam !== "1") return;
+    handledNewOrderRef.current = true;
+    resetFlow();
+    setStep("select");
+    router.replace("/kiosk");
+  }, [newOrderParam, resetFlow, router]);
 
   const isReview = step === "review";
   const hasItems = cart.length > 0;
