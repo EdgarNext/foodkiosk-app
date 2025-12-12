@@ -139,9 +139,9 @@ export default function KioskFlow({ categories, products }) {
           level: "ok",
           message: "Ticket enviado a la impresora."
         });
-        router.replace(
-          `/kiosk/tickets/${orderData.orderId}?skipAutoPrint=1`
-        );
+        resetFlow();
+        setStep("select");
+        router.replace("/kiosk_v1");
       } else {
         setPrintStatus({
           level: "warn",
