@@ -19,7 +19,7 @@ export default async function KioskPage() {
         </p>
         <h1 className="text-2xl font-semibold">Selección de productos</h1>
         <p className="text-sm text-text-muted">
-          Arma tu pedido y genera tu tiket para pagar en caja.
+          Arma tu pedido y genera tu ticket para pagar en caja.
         </p>
       </div>
 

@@ -103,7 +103,7 @@ export default function TicketPrintClient({
           </div>
 
           <div className="ticket__footer">
-            <p>Paga este tiket en caja.</p>
+            <p>Paga este ticket en caja.</p>
             <p>No es comprobante fiscal.</p>
             {ticket.customerName ? (
               <p>Cliente: {ticket.customerName}</p>
@@ -128,11 +128,11 @@ export default function TicketPrintClient({
             className="print-actions__button print-actions__button--primary"
             onClick={() => window.print()}
           >
-            Reimprimir tiket
+            Reimprimir ticket
           </button>
         </div>
         <p className="print-actions__hint">
-          En caso de error reimprime tu tiket
+          En caso de error reimprime tu ticket
         </p>
       </div>
 

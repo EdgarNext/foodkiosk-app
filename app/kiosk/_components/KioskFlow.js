@@ -4,10 +4,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import KioskShell from "./KioskShell";
 import { useKioskOrderStore } from "../_lib/useKioskOrderStore";
-import {
-  createKioskOrder,
-  createKioskOrderDirect,
-} from "../_lib/createKioskOrder";
+import { createKioskOrder } from "../_lib/createKioskOrder";
 import { useFormStatus } from "react-dom";
 import {
   buildProTicketSoap,
@@ -30,13 +27,13 @@ export default function KioskFlow({ categories, products }) {
   const [serviceLocation, setServiceLocation] = useState("");
   const newOrderParam = useSearchParams()?.get("newOrder");
   const handledNewOrderRef = useRef(false);
-  const [lastCreatedOrder, setLastCreatedOrder] = useState(null);
 
   const cart = useKioskOrderStore((state) => state.cart);
   const total = useKioskOrderStore((state) => state.total);
   const clearCart = useKioskOrderStore((state) => state.clearCart);
   const resetFlow = useKioskOrderStore((state) => state.resetFlow);
   const [printStatus, setPrintStatus] = useState(null);
+  const [pendingOrder, setPendingOrder] = useState(null);
 
   const [state, formAction] = useActionState(createKioskOrder, initialState);
 
@@ -71,9 +68,9 @@ export default function KioskFlow({ categories, products }) {
 
   useEffect(() => {
     if (!state?.success || !state.orderId) return;
-    // Navegamos sin limpiar estado; el carrito/step se limpian en un "nuevo pedido"
-    router.replace(`/kiosk/tickets/${state.orderId}?justCreated=1`);
-  }, [state, router]);
+    setPrintStatus({ level: "info", message: "Generando tu ticket..." });
+    handleDirectPrint(state);
+  }, [state]);
 
   useEffect(() => {
     if (handledNewOrderRef.current) return;
@@ -87,49 +84,31 @@ export default function KioskFlow({ categories, products }) {
   const isReview = step === "review";
   const hasItems = cart.length > 0;
 
-  const handleDirectPrint = async () => {
-    if (!hasItems) {
-      setPrintStatus({
-        level: "error",
-        message: "Agrega productos antes de imprimir.",
-      });
-      return;
-    }
+  const handleDirectPrint = async (orderData) => {
+    if (!orderData) return;
 
     setIsPrinting(true);
-    setPrintStatus({ level: "info", message: "Generando tu ticket..." });
+    setPrintStatus({ level: "info", message: "Imprimiendo ticket..." });
+    setPendingOrder(orderData);
+
+    const itemsForTicket = (orderData.items || []).map((it) => ({
+      qty: it.qty ?? it.quantity ?? 0,
+      name: it.name ?? it.product_name ?? "Producto",
+      price: Number(it.unit_price_cents ?? 0) / 100,
+    }));
+
+    const soapXml = buildProTicketSoap({
+      devid: EPOS_DEFAULTS.devid,
+      timeoutMs: EPOS_DEFAULTS.timeoutMs,
+      header: "CC La Cafeteria",
+      subtitle: "Kiosko",
+      orderNo: orderData.folio ?? orderData.orderId ?? "N/A",
+      items: itemsForTicket,
+      payment: "PAGA EN CAJA",
+      tagline: "Operación impecable, cada día.",
+    });
 
     try {
-      let orderData = lastCreatedOrder;
-
-      if (!orderData) {
-        const created = await createKioskOrderDirect(payload);
-        if (!created?.success) {
-          throw new Error(created?.error || "No se pudo crear la orden");
-        }
-        orderData = created;
-        setLastCreatedOrder(created);
-      }
-
-      setPrintStatus({ level: "info", message: "Imprimiendo ticket..." });
-
-      const itemsForTicket = (orderData.items || []).map((it) => ({
-        qty: it.qty ?? it.quantity ?? 0,
-        name: it.name ?? it.product_name ?? "Producto",
-        price: Number(it.unit_price_cents ?? 0) / 100,
-      }));
-
-      const soapXml = buildProTicketSoap({
-        devid: EPOS_DEFAULTS.devid,
-        timeoutMs: EPOS_DEFAULTS.timeoutMs,
-        header: "CC La Cafeteria",
-        subtitle: "Kiosko",
-        orderNo: orderData.folio ?? orderData.orderId ?? "N/A",
-        items: itemsForTicket,
-        payment: "PAGA EN CAJA",
-        tagline: "Operación impecable, cada día.",
-      });
-
       const result = await sendEposToPrinter({
         host: EPOS_DEFAULTS.host,
         devid: EPOS_DEFAULTS.devid,
@@ -180,7 +159,7 @@ export default function KioskFlow({ categories, products }) {
                 Resumen de pedido
               </p>
               <h2 className="text-xl font-semibold">
-                Con este tiket pagarás en caja. Después prepararemos tu pedido.
+                Con este ticket pagarás en caja. Después prepararemos tu pedido.
               </h2>
             </div>
             <div className="text-sm text-text-muted">
@@ -268,14 +247,25 @@ export default function KioskFlow({ categories, products }) {
 
               {state?.error ? (
                 <div className="text-sm text-danger border border-danger/40 bg-danger/10 rounded-lg px-3 py-2">
-                  Ocurrió un problema al generar tu tiket. Intenta de nuevo.
+                  Ocurrió un problema al generar tu ticket. Intenta de nuevo.
                   <div className="text-xs text-text-muted mt-1">
                     {state.error}
                   </div>
                 </div>
               ) : null}
 
-              <form action={formAction} className="space-y-2">
+              <form
+                action={formAction}
+                className="space-y-2"
+                onSubmit={() => {
+                  setIsPrinting(true);
+                  setPrintStatus({
+                    level: "info",
+                    message: "Generando tu ticket..."
+                  });
+                  setPendingOrder(null);
+                }}
+              >
                 <input
                   type="hidden"
                   name="payload"
@@ -285,22 +275,19 @@ export default function KioskFlow({ categories, products }) {
                 <div className="flex flex-col gap-2">
                   <button
                     type="button"
-                    className="w-full py-2 rounded-lg border border-border-subtle text-sm font-semibold text-text-main"
+                    className="w-full py-2 rounded-lg border border-border-subtle text-sm font-semibold text-text-main disabled:opacity-50 disabled:cursor-not-allowed disabled:border-dashed disabled:text-text-muted"
                     onClick={() => setStep("select")}
-                    disabled={state?.success}
+                    disabled={state?.success || printStatus?.level === "warn"}
                   >
                     Volver a editar
                   </button>
-                  <div className="flex flex-col md:flex-row gap-2">
-                    <button
-                      type="button"
-                      className="w-full py-2 rounded-lg bg-brand text-brand-on font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                      onClick={handleDirectPrint}
-                      disabled={!hasItems || state?.success}
-                    >
-                      Generar tiket
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    className="w-full py-2 rounded-lg bg-brand text-brand-on font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={!hasItems || state?.success}
+                  >
+                    Generar ticket
+                  </button>
                 </div>
               </form>
               {printStatus ? (
@@ -318,6 +305,16 @@ export default function KioskFlow({ categories, products }) {
                   {printStatus.message}
                 </div>
               ) : null}
+              {printStatus?.level && pendingOrder ? (
+                <button
+                  type="button"
+                  className="mt-2 w-full py-2 rounded-lg border border-border-subtle text-sm font-semibold text-text-main disabled:opacity-60 disabled:cursor-not-allowed"
+                  onClick={() => handleDirectPrint(pendingOrder)}
+                  disabled={isPrinting}
+                >
+                  Reintentar impresión
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -326,7 +323,7 @@ export default function KioskFlow({ categories, products }) {
       {isPrinting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="bg-white rounded-xl px-6 py-4 text-center max-w-xs space-y-2 shadow-xl">
-            <p className="text-lg font-semibold">Generando tu tiket…</p>
+            <p className="text-lg font-semibold">Generando tu ticket…</p>
             <p className="text-sm text-text-muted">
               Por favor espera un momento
             </p>
@@ -351,7 +348,7 @@ function SubmitButton({ disabled, onStart }) {
         }
       }}
     >
-      {pending ? "Generando tu tiket..." : "Generar tiket"}
+      {pending ? "Generando tu ticket..." : "Generar ticket"}
     </button>
   );
 }

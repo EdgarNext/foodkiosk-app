@@ -63,7 +63,7 @@ export default async function TicketPage(props) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5] px-4">
         <div className="max-w-md w-full rounded-xl border border-border-subtle bg-white shadow-sm p-6 text-center space-y-3">
-          <p className="text-lg font-semibold">No se pudo cargar el tiket</p>
+          <p className="text-lg font-semibold">No se pudo cargar el ticket</p>
           <p className="text-sm text-text-muted">{error}</p>
           <a
             href="/kiosk"

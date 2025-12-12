@@ -67,6 +67,7 @@ async function persistOrder(payload) {
   const supabase = await createClient();
 
   const orderPayload = buildOrderPayload(payload);
+  console.log("[kiosk] creando orden kiosk_orders", orderPayload);
   const { data: order, error: orderError } = await supabase
     .from("kiosk_orders")
     .insert(orderPayload)
@@ -74,6 +75,7 @@ async function persistOrder(payload) {
     .single();
 
   if (orderError || !order) {
+    console.error("[kiosk] error creando orden", orderError);
     return {
       success: false,
       error:
@@ -83,12 +85,14 @@ async function persistOrder(payload) {
   }
 
   const itemsPayload = buildItemsPayload(order.id, payload.items);
+  console.log("[kiosk] insertando items kiosk_order_items", itemsPayload);
 
   const { error: itemsError } = await supabase
     .from("kiosk_order_items")
     .insert(itemsPayload);
 
   if (itemsError) {
+    console.error("[kiosk] error guardando items", itemsError);
     return {
       success: false,
       error:
