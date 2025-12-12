@@ -1,25 +1,17 @@
-"use client";
+'use client';
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import KioskShell from "./KioskShell";
 import { useKioskOrderStore } from "../_lib/useKioskOrderStore";
-import {
-  createKioskOrder,
-  createKioskOrderDirect,
-} from "../_lib/createKioskOrder";
+import { createKioskOrder } from "../_lib/createKioskOrder";
 import { useFormStatus } from "react-dom";
-import {
-  buildProTicketSoap,
-  EPOS_DEFAULTS,
-  sendEposToPrinter,
-} from "../_lib/eposClient";
 
 const initialState = {
   success: false,
   error: null,
   orderId: null,
-  folio: null,
+  folio: null
 };
 
 export default function KioskFlow({ categories, products }) {
@@ -30,13 +22,11 @@ export default function KioskFlow({ categories, products }) {
   const [serviceLocation, setServiceLocation] = useState("");
   const newOrderParam = useSearchParams()?.get("newOrder");
   const handledNewOrderRef = useRef(false);
-  const [lastCreatedOrder, setLastCreatedOrder] = useState(null);
 
   const cart = useKioskOrderStore((state) => state.cart);
   const total = useKioskOrderStore((state) => state.total);
   const clearCart = useKioskOrderStore((state) => state.clearCart);
   const resetFlow = useKioskOrderStore((state) => state.resetFlow);
-  const [printStatus, setPrintStatus] = useState(null);
 
   const [state, formAction] = useActionState(createKioskOrder, initialState);
 
@@ -51,7 +41,7 @@ export default function KioskFlow({ categories, products }) {
         category_id: item.categoryId || null,
         quantity,
         unit_price_cents,
-        total_price_cents: unit_price_cents * quantity,
+        total_price_cents: unit_price_cents * quantity
       };
     });
 
@@ -65,7 +55,7 @@ export default function KioskFlow({ categories, products }) {
       items,
       source: "kiosk",
       customer_name: customerName || null,
-      service_location: serviceLocation || null,
+      service_location: serviceLocation || null
     };
   }, [cart, total, customerName, serviceLocation]);
 
@@ -86,83 +76,6 @@ export default function KioskFlow({ categories, products }) {
 
   const isReview = step === "review";
   const hasItems = cart.length > 0;
-
-  const handleDirectPrint = async () => {
-    if (!hasItems) {
-      setPrintStatus({
-        level: "error",
-        message: "Agrega productos antes de imprimir.",
-      });
-      return;
-    }
-
-    setIsPrinting(true);
-    setPrintStatus({ level: "info", message: "Generando tu ticket..." });
-
-    try {
-      let orderData = lastCreatedOrder;
-
-      if (!orderData) {
-        const created = await createKioskOrderDirect(payload);
-        if (!created?.success) {
-          throw new Error(created?.error || "No se pudo crear la orden");
-        }
-        orderData = created;
-        setLastCreatedOrder(created);
-      }
-
-      setPrintStatus({ level: "info", message: "Imprimiendo ticket..." });
-
-      const itemsForTicket = (orderData.items || []).map((it) => ({
-        qty: it.qty ?? it.quantity ?? 0,
-        name: it.name ?? it.product_name ?? "Producto",
-        price: Number(it.unit_price_cents ?? 0) / 100,
-      }));
-
-      const soapXml = buildProTicketSoap({
-        devid: EPOS_DEFAULTS.devid,
-        timeoutMs: EPOS_DEFAULTS.timeoutMs,
-        header: "CC La Cafeteria",
-        subtitle: "Kiosko",
-        orderNo: orderData.folio ?? orderData.orderId ?? "N/A",
-        items: itemsForTicket,
-        payment: "PAGA EN CAJA",
-        tagline: "Operación impecable, cada día.",
-      });
-
-      const result = await sendEposToPrinter({
-        host: EPOS_DEFAULTS.host,
-        devid: EPOS_DEFAULTS.devid,
-        timeoutMs: EPOS_DEFAULTS.timeoutMs,
-        soapXml,
-      });
-
-      if (result.success) {
-        setPrintStatus({
-          level: "ok",
-          message: "Ticket enviado a la impresora.",
-        });
-        resetFlow();
-        setStep("select");
-        router.replace("/kiosk_v1");
-      } else {
-        setPrintStatus({
-          level: "warn",
-          message: `Falló la impresión. Código: ${
-            result.code || "error"
-          }. Reintenta sin generar nueva orden.`,
-        });
-      }
-    } catch (err) {
-      setPrintStatus({
-        level: "error",
-        message: `No se pudo enviar a la impresora: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      });
-    }
-    setIsPrinting(false);
-  };
 
   return (
     <div className="space-y-4">
@@ -188,7 +101,7 @@ export default function KioskFlow({ categories, products }) {
               <span className="font-semibold text-text-main">
                 {total.toLocaleString("es-MX", {
                   style: "currency",
-                  currency: "MXN",
+                  currency: "MXN"
                 })}
               </span>
             </div>
@@ -209,7 +122,7 @@ export default function KioskFlow({ categories, products }) {
                       Cant: {item.quantity} x{" "}
                       {Number(item.price ?? 0).toLocaleString("es-MX", {
                         style: "currency",
-                        currency: "MXN",
+                        currency: "MXN"
                       })}
                     </p>
                   </div>
@@ -260,7 +173,7 @@ export default function KioskFlow({ categories, products }) {
                   <span>
                     {total.toLocaleString("es-MX", {
                       style: "currency",
-                      currency: "MXN",
+                      currency: "MXN"
                     })}
                   </span>
                 </div>
@@ -269,9 +182,7 @@ export default function KioskFlow({ categories, products }) {
               {state?.error ? (
                 <div className="text-sm text-danger border border-danger/40 bg-danger/10 rounded-lg px-3 py-2">
                   Ocurrió un problema al generar tu tiket. Intenta de nuevo.
-                  <div className="text-xs text-text-muted mt-1">
-                    {state.error}
-                  </div>
+                  <div className="text-xs text-text-muted mt-1">{state.error}</div>
                 </div>
               ) : null}
 
@@ -284,40 +195,16 @@ export default function KioskFlow({ categories, products }) {
                 />
                 <div className="flex flex-col gap-2">
                   <button
-                    type="button"
-                    className="w-full py-2 rounded-lg border border-border-subtle text-sm font-semibold text-text-main"
-                    onClick={() => setStep("select")}
-                    disabled={state?.success}
-                  >
-                    Volver a editar
-                  </button>
-                  <div className="flex flex-col md:flex-row gap-2">
-                    <button
-                      type="button"
-                      className="w-full py-2 rounded-lg bg-brand text-brand-on font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                      onClick={handleDirectPrint}
-                      disabled={!hasItems || state?.success}
-                    >
-                      Generar tiket
-                    </button>
-                  </div>
+                  type="button"
+                  className="w-full py-2 rounded-lg border border-border-subtle text-sm font-semibold text-text-main"
+                  onClick={() => setStep("select")}
+                  disabled={state?.success}
+                >
+                  Volver a editar
+                </button>
+                  <SubmitButton disabled={!hasItems} onStart={() => setIsPrinting(true)} />
                 </div>
               </form>
-              {printStatus ? (
-                <div
-                  className={`text-xs border rounded-lg px-3 py-2 ${
-                    printStatus.level === "ok"
-                      ? "border-green-400 text-green-700"
-                      : printStatus.level === "warn"
-                      ? "border-yellow-400 text-yellow-700"
-                      : printStatus.level === "info"
-                      ? "border-blue-400 text-blue-700"
-                      : "border-red-400 text-red-700"
-                  }`}
-                >
-                  {printStatus.message}
-                </div>
-              ) : null}
             </div>
           </div>
         </div>

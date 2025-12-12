@@ -125,7 +125,7 @@ export default function TicketPrintClient({
           </button>
           <button
             type="button"
-            className="print-actions__button print-actions__button--primary"
+            className="print-actions__button print-actions__button--secondary"
             onClick={() => window.print()}
           >
             Reimprimir tiket
@@ -291,6 +291,16 @@ export default function TicketPrintClient({
           color: var(--color-brand-on, #fff);
           border-color: var(--color-brand, #2563eb);
           width: 100%;
+        }
+
+        .print-actions__button--secondary {
+          align-self: flex-start;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 8px 10px;
+          border-color: #e5e7eb;
+          background: #f9fafb;
+          color: #6b7280;
         }
 
         .print-actions__hint {

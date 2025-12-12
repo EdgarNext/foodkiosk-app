@@ -1,5 +1,5 @@
 import TicketPrintContainer from "../_components/TicketPrintContainer";
-import { getLegacyOrderWithItems } from "../../../legacy/_lib/getLegacyOrder";
+import { getKioskOrderWithItems } from "../../_lib/getKioskOrder";
 
 export const revalidate = 0;
 
@@ -54,9 +54,10 @@ export default async function TicketPage(props) {
   const resolvedSearchParams = await props.searchParams;
 
   const orderId = resolvedParams?.orderId;
-  const autoPrint = resolvedSearchParams?.justCreated === "1";
+  const skipAutoPrint = resolvedSearchParams?.skipAutoPrint === "1";
+  const autoPrint = skipAutoPrint ? false : resolvedSearchParams?.justCreated === "1" || true;
 
-  const { data, error } = await getLegacyOrderWithItems(orderId);
+  const { data, error } = await getKioskOrderWithItems(orderId);
 
   if (error) {
     return (
