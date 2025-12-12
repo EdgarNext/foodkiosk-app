@@ -277,14 +277,23 @@ export default function KioskFlow({ categories, products }) {
                     type="button"
                     className="w-full py-2 rounded-lg border border-border-subtle text-sm font-semibold text-text-main disabled:opacity-50 disabled:cursor-not-allowed disabled:border-dashed disabled:text-text-muted"
                     onClick={() => setStep("select")}
-                    disabled={state?.success || printStatus?.level === "warn"}
+                    disabled={
+                      printStatus?.level === "warn" ||
+                      printStatus?.level === "error" ||
+                      isPrinting
+                    }
                   >
                     Volver a editar
                   </button>
                   <button
                     type="submit"
                     className="w-full py-2 rounded-lg bg-brand text-brand-on font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                    disabled={!hasItems || state?.success}
+                    disabled={
+                      !hasItems ||
+                      isPrinting ||
+                      printStatus?.level === "warn" ||
+                      printStatus?.level === "error"
+                    }
                   >
                     Generar ticket
                   </button>
