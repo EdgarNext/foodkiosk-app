@@ -34,6 +34,7 @@ export default function KioskFlow({ categories, products }) {
   const resetFlow = useKioskOrderStore((state) => state.resetFlow);
   const [printStatus, setPrintStatus] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
+  const [lastCreatedOrder, setLastCreatedOrder] = useState(null);
 
   const [state, formAction] = useActionState(createKioskOrder, initialState);
 
@@ -77,9 +78,20 @@ export default function KioskFlow({ categories, products }) {
     if (newOrderParam !== "1") return;
     handledNewOrderRef.current = true;
     resetFlow();
+    setPrintStatus(null);
+    setPendingOrder(null);
+    setIsPrinting(false);
     setStep("select");
     router.replace("/kiosk");
   }, [newOrderParam, resetFlow, router]);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      setPrintStatus(null);
+      setPendingOrder(null);
+      setIsPrinting(false);
+    }
+  }, [cart.length]);
 
   const isReview = step === "review";
   const hasItems = cart.length > 0;
@@ -90,6 +102,7 @@ export default function KioskFlow({ categories, products }) {
     setIsPrinting(true);
     setPrintStatus({ level: "info", message: "Imprimiendo ticket..." });
     setPendingOrder(orderData);
+    setLastCreatedOrder(orderData);
 
     const itemsForTicket = (orderData.items || []).map((it) => ({
       qty: it.qty ?? it.quantity ?? 0,
