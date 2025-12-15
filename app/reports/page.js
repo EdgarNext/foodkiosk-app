@@ -81,7 +81,6 @@ export default async function ReportsPage({ searchParams }) {
     to: range.to,
     fromIso,
     toIso,
-    ordersLimit: 200,
   });
 
   return (

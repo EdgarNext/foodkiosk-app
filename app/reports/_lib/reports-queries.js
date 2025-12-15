@@ -37,21 +37,16 @@ function toLocalDayKey(iso) {
   return `${y}-${m}-${day}`;
 }
 
-function clampTop(list, n) {
-  return list.slice(0, Math.max(0, n));
-}
-
 export async function fetchReportsBundle({
   from,
   to,
   fromIso,
   toIso,
-  ordersLimit = 200,
 }) {
   const supabase = await createClient();
 
   // Órdenes + items (mínimos campos útiles para reportes)
-  const { data: orders, error } = await supabase
+  let ordersQuery = supabase
     .from("kiosk_orders")
     .select(
       `
@@ -81,8 +76,9 @@ export async function fetchReportsBundle({
     )
     .gte("created_at", fromIso)
     .lte("created_at", toIso)
-    .order("created_at", { ascending: false })
-    .limit(ordersLimit);
+    .order("created_at", { ascending: false });
+
+  const { data: orders, error } = await ordersQuery;
 
   if (error) {
     return {
@@ -191,14 +187,10 @@ export async function fetchReportsBundle({
     };
   });
 
-  const topByQty = clampTop(
-    [...products].sort((a, b) => b.qty - a.qty),
-    12
-  );
+  const topByQty = [...products].sort((a, b) => b.qty - a.qty);
 
-  const topByRevenue = clampTop(
-    [...products].sort((a, b) => b.revenueCents - a.revenueCents),
-    12
+  const topByRevenue = [...products].sort(
+    (a, b) => b.revenueCents - a.revenueCents
   );
 
   return {
